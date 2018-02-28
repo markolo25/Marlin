@@ -370,9 +370,9 @@
   //#define  DEFAULT_Kd 440
 
   //Mark's Makerfarm with E3d V5 Hotend
-  #define  DEFAULT_Kp 12.61
-  #define  DEFAULT_Ki 0.63
-  #define  DEFAULT_Kd 63.53
+  #define  DEFAULT_Kp 15.85
+  #define  DEFAULT_Ki 1.03
+  #define  DEFAULT_Kd 61.02
 
 
 #endif // PIDTEMP
@@ -389,7 +389,7 @@
 // If your configuration is significantly different than this and you don't understand the issues involved, you probably
 // shouldn't use bed PID until someone else verifies your hardware works.
 // If this is enabled, find your own PID constants below.
-#define PIDTEMPBED
+//#define PIDTEMPBED
 
 //#define BED_LIMIT_SWITCHING
 
