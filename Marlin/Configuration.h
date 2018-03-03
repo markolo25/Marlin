@@ -432,9 +432,9 @@
   // FIND YOUR OWN: "M303 E-1 C8 S90" to run autotune on the bed at 90 degreesC for 8 cycles.
 
   //Mark's Makerfarm with E3d V5 Hotend PCB 8" bed
-  #define  DEFAULT_bedKp 205.40
-  #define  DEFAULT_bedKi 39.80
-  #define  DEFAULT_bedKd 265.02
+  #define  DEFAULT_bedKp 172.05
+  #define  DEFAULT_bedKi 32.82
+  #define  DEFAULT_bedKd 225.52
 
 #endif // PIDTEMPBED
 
