@@ -232,6 +232,11 @@ uint16_t max_display_update_time = 0;
     void lcd_delta_calibrate_menu();
   #endif
 
+  #if ENABLED(ENABLE_LEVELING_FADE_HEIGHT)
+    static float new_z_fade_height;
+    void _lcd_set_z_fade_height() { set_z_fade_height(new_z_fade_height); }
+  #endif
+
   ////////////////////////////////////////////
   //////////// Menu System Actions ///////////
   ////////////////////////////////////////////
@@ -642,6 +647,12 @@ void lcd_status_screen() {
     ENCODER_RATE_MULTIPLY(false);
   #endif
 
+  #if ENABLED(LCD_SET_PROGRESS_MANUALLY) && ENABLED(SDSUPPORT) && (ENABLED(LCD_PROGRESS_BAR) || ENABLED(DOGLCD))
+    // Progress bar % comes from SD when actively printing
+    if (IS_SD_PRINTING)
+      progress_bar_percent = card.percentDone();
+  #endif
+
   #if ENABLED(LCD_PROGRESS_BAR)
 
     //
@@ -649,12 +660,6 @@ void lcd_status_screen() {
     // message expiration because Status Line and Progress Bar
     // share the same line on the display.
     //
-
-    // Set current percentage from SD when actively printing
-    #if ENABLED(LCD_SET_PROGRESS_MANUALLY)
-      if (IS_SD_PRINTING)
-        progress_bar_percent = card.percentDone();
-    #endif
 
     millis_t ms = millis();
 
@@ -978,6 +983,13 @@ void kill_screen(const char* lcd_msg) {
    *
    */
 
+  #if ENABLED(ENABLE_LEVELING_FADE_HEIGHT)
+    void _lcd_goto_tune_menu() {
+      lcd_goto_screen(lcd_tune_menu);
+      new_z_fade_height = planner.z_fade_height;
+    }
+  #endif
+
   void lcd_main_menu() {
     START_MENU();
     MENU_BACK(MSG_WATCH);
@@ -1005,7 +1017,13 @@ void kill_screen(const char* lcd_msg) {
     #endif
 
     if (planner.movesplanned() || IS_SD_PRINTING) {
-      MENU_ITEM(submenu, MSG_TUNE, lcd_tune_menu);
+      MENU_ITEM(submenu, MSG_TUNE,
+        #if ENABLED(ENABLE_LEVELING_FADE_HEIGHT)
+          _lcd_goto_tune_menu
+        #else
+          lcd_tune_menu
+        #endif
+      );
     }
     else {
       MENU_ITEM(submenu, MSG_PREPARE, lcd_prepare_menu);
@@ -1298,7 +1316,9 @@ void kill_screen(const char* lcd_msg) {
     #if ENABLED(MESH_BED_LEVELING) && ENABLED(LCD_BED_LEVELING)
       MENU_ITEM_EDIT(float43, MSG_BED_Z, &mbl.z_offset, -1, 1);
     #endif
-
+    #if ENABLED(ENABLE_LEVELING_FADE_HEIGHT)
+      MENU_MULTIPLIER_ITEM_EDIT_CALLBACK(float3, MSG_Z_FADE_HEIGHT, &new_z_fade_height, 0.0, 100.0, _lcd_set_z_fade_height);
+    #endif
     //
     // Nozzle:
     // Nozzle [1-4]:
@@ -1926,11 +1946,6 @@ void kill_screen(const char* lcd_msg) {
     static bool new_level_state;
     void _lcd_toggle_bed_leveling() { set_bed_leveling_enabled(new_level_state); }
 
-    #if ENABLED(ENABLE_LEVELING_FADE_HEIGHT)
-      static float new_z_fade_height;
-      void _lcd_set_z_fade_height() { set_z_fade_height(new_z_fade_height); }
-    #endif
-
     /**
      * Step 1: Bed Level entry-point
      *
@@ -1991,16 +2006,23 @@ void kill_screen(const char* lcd_msg) {
       END_MENU();
     }
 
-    void _lcd_goto_bed_leveling() {
-      lcd_goto_screen(lcd_bed_leveling);
-      #if ENABLED(ENABLE_LEVELING_FADE_HEIGHT)
+    #if ENABLED(ENABLE_LEVELING_FADE_HEIGHT)
+      void _lcd_goto_bed_leveling() {
+        lcd_goto_screen(lcd_bed_leveling);
         new_z_fade_height = planner.z_fade_height;
-      #endif
-    }
+      }
+    #endif
 
   #elif ENABLED(AUTO_BED_LEVELING_UBL)
 
     void _lcd_ubl_level_bed();
+
+    #if ENABLED(ENABLE_LEVELING_FADE_HEIGHT)
+      void _lcd_goto_ubl_level_bed() {
+        lcd_goto_screen(_lcd_ubl_level_bed);
+        new_z_fade_height = planner.z_fade_height;
+      }
+    #endif
 
     static int16_t ubl_storage_slot = 0,
                custom_hotend_temp = 190,
@@ -2518,6 +2540,9 @@ void kill_screen(const char* lcd_msg) {
       MENU_ITEM(submenu, MSG_UBL_OUTPUT_MAP, _lcd_ubl_output_map);
       MENU_ITEM(submenu, MSG_UBL_TOOLS, _lcd_ubl_tools_menu);
       MENU_ITEM(gcode, MSG_UBL_INFO_UBL, PSTR("G29 W"));
+      #if ENABLED(ENABLE_LEVELING_FADE_HEIGHT)
+        MENU_MULTIPLIER_ITEM_EDIT_CALLBACK(float3, MSG_Z_FADE_HEIGHT, &new_z_fade_height, 0.0, 100.0, _lcd_set_z_fade_height);
+      #endif
       END_MENU();
     }
 
@@ -2559,7 +2584,13 @@ void kill_screen(const char* lcd_msg) {
     // Level Bed
     //
     #if ENABLED(AUTO_BED_LEVELING_UBL)
-      MENU_ITEM(submenu, MSG_UBL_LEVEL_BED, _lcd_ubl_level_bed);
+      MENU_ITEM(submenu, MSG_UBL_LEVEL_BED,
+        #if ENABLED(ENABLE_LEVELING_FADE_HEIGHT)
+          _lcd_goto_ubl_level_bed
+        #else
+          _lcd_ubl_level_bed
+        #endif
+      );
     #elif ENABLED(LCD_BED_LEVELING)
       #if ENABLED(PROBE_MANUALLY)
         if (!g29_in_progress)
@@ -2919,11 +2950,11 @@ void kill_screen(const char* lcd_msg) {
     }
     encoderPosition = 0;
     if (lcdDrawUpdate) {
-      const float pos = (processing_manual_move ? destination[axis] : current_position[axis]
+      const float pos = NATIVE_TO_LOGICAL(processing_manual_move ? destination[axis] : current_position[axis]
         #if IS_KINEMATIC
           + manual_move_offset
         #endif
-      );
+      , axis);
       lcd_implementation_drawedit(name, move_menu_scale >= 0.1 ? ftostr41sign(pos) : ftostr43sign(pos));
     }
   }
@@ -3183,7 +3214,7 @@ void kill_screen(const char* lcd_msg) {
     #if DISABLED(NO_VOLUMETRICS) || ENABLED(ADVANCED_PAUSE_FEATURE)
       MENU_ITEM(submenu, MSG_FILAMENT, lcd_control_filament_menu);
     #elif ENABLED(LIN_ADVANCE)
-      MENU_ITEM_EDIT(float3, MSG_ADVANCE_K, &planner.extruder_advance_k, 0, 999);
+      MENU_ITEM_EDIT(float32, MSG_ADVANCE_K, &planner.extruder_advance_K, 0, 999);
     #endif
 
     #if HAS_LCD_CONTRAST
@@ -3696,7 +3727,7 @@ void kill_screen(const char* lcd_msg) {
       MENU_BACK(MSG_CONTROL);
 
       #if ENABLED(LIN_ADVANCE)
-        MENU_ITEM_EDIT(float3, MSG_ADVANCE_K, &planner.extruder_advance_k, 0, 999);
+        MENU_ITEM_EDIT(float32, MSG_ADVANCE_K, &planner.extruder_advance_K, 0, 999);
       #endif
 
       #if DISABLED(NO_VOLUMETRICS)
@@ -4816,11 +4847,9 @@ void lcd_init() {
     #if BUTTON_EXISTS(EN1)
       SET_INPUT_PULLUP(BTN_EN1);
     #endif
-
     #if BUTTON_EXISTS(EN2)
       SET_INPUT_PULLUP(BTN_EN2);
     #endif
-
     #if BUTTON_EXISTS(ENC)
       SET_INPUT_PULLUP(BTN_ENC);
     #endif
@@ -4965,6 +4994,14 @@ void lcd_update() {
       }
     }
     else wait_for_unclick = false;
+
+    #if BUTTON_EXISTS(BACK)
+      if (LCD_BACK_CLICKED) {
+        lcd_quick_feedback(true);
+        lcd_goto_previous_menu();
+      }
+    #endif
+
   #endif
 
   #if ENABLED(SDSUPPORT) && PIN_EXISTS(SD_DETECT)
@@ -5126,20 +5163,34 @@ void lcd_update() {
       #endif
 
       #if ENABLED(DOGLCD)
-        if (!drawing_screen) {                        // If not already drawing pages
-          u8g.firstPage();                            // Start the first page
-          drawing_screen = 1;                         // Flag as drawing pages
-        }
-        lcd_setFont(FONT_MENU);                       // Setup font for every page draw
-        u8g.setColorIndex(1);                         // And reset the color
-        CURRENTSCREEN();                              // Draw and process the current screen
+        #if ENABLED(LIGHTWEIGHT_UI)
+          #if ENABLED(ULTIPANEL)
+            const bool in_status = currentScreen == lcd_status_screen;
+          #else
+            constexpr bool in_status = true;
+          #endif
+          const bool do_u8g_loop = !in_status;
+          lcd_in_status(in_status);
+          if (in_status) lcd_status_screen();
+        #else
+          constexpr bool do_u8g_loop = true;
+        #endif
+        if (do_u8g_loop) {
+          if (!drawing_screen) {                        // If not already drawing pages
+            u8g.firstPage();                            // Start the first page
+            drawing_screen = 1;                         // Flag as drawing pages
+          }
+          lcd_setFont(FONT_MENU);                       // Setup font for every page draw
+          u8g.setColorIndex(1);                         // And reset the color
+          CURRENTSCREEN();                              // Draw and process the current screen
 
-        // The screen handler can clear drawing_screen for an action that changes the screen.
-        // If still drawing and there's another page, update max-time and return now.
-        // The nextPage will already be set up on the next call.
-        if (drawing_screen && (drawing_screen = u8g.nextPage())) {
-          NOLESS(max_display_update_time, millis() - ms);
-          return;
+          // The screen handler can clear drawing_screen for an action that changes the screen.
+          // If still drawing and there's another page, update max-time and return now.
+          // The nextPage will already be set up on the next call.
+          if (drawing_screen && (drawing_screen = u8g.nextPage())) {
+            NOLESS(max_display_update_time, millis() - ms);
+            return;
+          }
         }
       #else
         CURRENTSCREEN();
@@ -5321,6 +5372,9 @@ void lcd_reset_alert_level() { lcd_status_message_level = 0; }
 
         #if BUTTON_EXISTS(ENC)
           if (BUTTON_PRESSED(ENC)) newbutton |= EN_C;
+        #endif
+        #if BUTTON_EXISTS(BACK)
+          if (BUTTON_PRESSED(BACK)) newbutton |= EN_D;
         #endif
 
         //
