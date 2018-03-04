@@ -418,9 +418,9 @@
   // FIND YOUR OWN: "M303 E-1 C8 S90" to run autotune on the bed at 90 degreesC for 8 cycles.
 
   //Mark's Makerfarm with E3d V5 Hotend PCB 8" bed
-  #define  DEFAULT_bedKp 205.40
-  #define  DEFAULT_bedKi 39.80
-  #define  DEFAULT_bedKd 265.02
+  #define  DEFAULT_bedKp 172.05
+  #define  DEFAULT_bedKi 32.82
+  #define  DEFAULT_bedKd 225.52
 
 #endif // PIDTEMPBED
 
@@ -697,7 +697,7 @@
  */
 #define X_PROBE_OFFSET_FROM_EXTRUDER 30  // X offset: -left  +right  [of the nozzle]
 #define Y_PROBE_OFFSET_FROM_EXTRUDER 0  // Y offset: -front +behind [the nozzle]
-#define Z_PROBE_OFFSET_FROM_EXTRUDER -4.50   // Z offset: -below +above  [the nozzle]
+#define Z_PROBE_OFFSET_FROM_EXTRUDER -4.40   // Z offset: -below +above  [the nozzle] -4.5
 
 // X and Y axis travel speed (mm/m) between probes
 #define XY_PROBE_SPEED 8000
