@@ -697,7 +697,7 @@
  */
 #define X_PROBE_OFFSET_FROM_EXTRUDER 30  // X offset: -left  +right  [of the nozzle]
 #define Y_PROBE_OFFSET_FROM_EXTRUDER 0  // Y offset: -front +behind [the nozzle]
-#define Z_PROBE_OFFSET_FROM_EXTRUDER -4.40   // Z offset: -below +above  [the nozzle] -4.5
+#define Z_PROBE_OFFSET_FROM_EXTRUDER -6.40   // Z offset: -below +above  [the nozzle] -4.5 -4.40
 
 // X and Y axis travel speed (mm/m) between probes
 #define XY_PROBE_SPEED 8000
@@ -813,7 +813,7 @@
  */
 
 // Min software endstops curtail movement below minimum coordinate bounds
-#define MIN_SOFTWARE_ENDSTOPS
+//#define MIN_SOFTWARE_ENDSTOPS
 #if ENABLED(MIN_SOFTWARE_ENDSTOPS)
   #define MIN_SOFTWARE_ENDSTOP_X
   #define MIN_SOFTWARE_ENDSTOP_Y
