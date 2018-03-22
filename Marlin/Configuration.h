@@ -370,9 +370,9 @@
   //#define  DEFAULT_Kd 440
 
   //Mark's Makerfarm with E3d V5 Hotend
-  #define  DEFAULT_Kp 13.64
-  #define  DEFAULT_Ki 0.85
-  #define  DEFAULT_Kd 55.04
+  #define  DEFAULT_Kp 13.17
+  #define  DEFAULT_Ki 0.79
+  #define  DEFAULT_Kd 55.03
 
 
 #endif // PIDTEMP
@@ -697,7 +697,7 @@
  */
 #define X_PROBE_OFFSET_FROM_EXTRUDER 30  // X offset: -left  +right  [of the nozzle]
 #define Y_PROBE_OFFSET_FROM_EXTRUDER 0  // Y offset: -front +behind [the nozzle]
-#define Z_PROBE_OFFSET_FROM_EXTRUDER -6.40   // Z offset: -below +above  [the nozzle] -4.5 -4.40
+#define Z_PROBE_OFFSET_FROM_EXTRUDER -5.40   // Z offset: -below +above  [the nozzle] -4.5 -4.40
 
 // X and Y axis travel speed (mm/m) between probes
 #define XY_PROBE_SPEED 8000
